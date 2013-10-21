@@ -31,7 +31,6 @@ net = buildNetwork(TRAIN_KERNEL, 3, 1)
 
 from pybrain.datasets import SupervisedDataSet
 ds = SupervisedDataSet(TRAIN_KERNEL, 1)
-ds.addSample((0,0,0,0,0,0,0,0,0,0),(0))
 
 for i in  xrange(TRAIN_STEPS):
 	ds.addSample(tuple(rates[i:i+TRAIN_KERNEL]), (rates[i + TRAIN_KERNEL]))
@@ -40,4 +39,3 @@ from pybrain.supervised.trainers import BackpropTrainer
 
 trainer = BackpropTrainer(net, ds)
 trainer.train()
-print trainer

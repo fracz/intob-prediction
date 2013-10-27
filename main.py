@@ -20,14 +20,15 @@ def parseEuroXRef(file):
 	return rates
 
 rates = parseEuroXRef('trainingdata/eurofxref-hist.csv')
-print len(rates)
 
 from pybrain.tools.shortcuts import buildNetwork
 
-TRAIN_KERNEL = 10
-TRAIN_STEPS = 20
+# training
 
-net = buildNetwork(TRAIN_KERNEL, 3, 1)
+TRAIN_KERNEL = 10
+TRAIN_STEPS = 100
+
+net = buildNetwork(TRAIN_KERNEL, 15, 5, 1)
 
 from pybrain.datasets import SupervisedDataSet
 ds = SupervisedDataSet(TRAIN_KERNEL, 1)
@@ -38,4 +39,19 @@ for i in  xrange(TRAIN_STEPS):
 from pybrain.supervised.trainers import BackpropTrainer
 
 trainer = BackpropTrainer(net, ds)
-trainer.train()
+for i in xrange(100):
+	trainer.train()
+#print trainer.trainUntilConvergence()
+
+# testing
+import math 
+
+TEST_OFFSET = 2000
+TEST_NUM = 10
+for i in xrange(TEST_OFFSET, TEST_OFFSET + TEST_NUM):
+	data = rates[i:i+TRAIN_KERNEL]
+	truth = rates[i+TRAIN_KERNEL]
+	prediction = net.activate(data)[0]
+	diff = truth-prediction
+
+	print truth, prediction, diff

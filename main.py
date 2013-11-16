@@ -22,6 +22,7 @@ def parseEuroXRef(file):
 def PrepareRates(rates):
 # convert rates 
 	return [(rates[k+1]-rates[k]) / rates[k] for k in xrange(len(rates)-1)]
+	#return [math.sin(x / 16. * math.pi) for x in xrange(2000)]
 	#return [math.copysign(1., rates[k+1]-rates[k]) for k in xrange(len(rates)-1)]
 
 from pybrain.tools.shortcuts import buildNetwork
@@ -100,7 +101,7 @@ def PlotLearningErrors(info):
 
 ##################
 TRAIN_KERNEL = 5
-TRAIN_STEPS = 500
+TRAIN_STEPS = 200
 
 data = PrepareRates(parseEuroXRef('trainingdata/eurofxref-hist.csv'))
 net = BuildNetwork(TRAIN_KERNEL)
@@ -111,9 +112,9 @@ PlotLearningErrors(trainInfo)
 # testing
 
 TEST_OFFSET = 0
-TEST_NUM = 50
+TEST_NUM = 100
 
 P = Predict(net, data[TEST_OFFSET:], TRAIN_KERNEL, TEST_NUM)
-T = data[TEST_OFFSET:TEST_OFFSET + TEST_NUM]
+T = data[TEST_OFFSET + TRAIN_KERNEL:TEST_OFFSET + TRAIN_KERNEL + TEST_NUM]
 
 PlotResults(T, P)

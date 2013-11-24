@@ -21,7 +21,11 @@ def parseEuroXRef(file):
 
 def PrepareRates(rates):
 # convert rates 
-	return [(rates[k+1]-rates[k]) / rates[k] for k in xrange(len(rates)-1)]
+	rates_ = [(rates[k+1]-rates[k]) / rates[k] for k in xrange(len(rates)-1)]
+	denom = max(rates_)
+	rates_ = map(lambda x: x/denom, rates_)
+	return map(lambda x: math.copysign(math.pow(math.fabs(x), 0.5),x), rates_)
+
 	#return [math.sin(x / 16. * math.pi) for x in xrange(2000)]
 	#return [math.copysign(1., rates[k+1]-rates[k]) for k in xrange(len(rates)-1)]
 
@@ -32,7 +36,7 @@ def BuildNetwork(INPUT_KERNEL):
 	n = FeedForwardNetwork()
 
 	inLayer = LinearLayer(INPUT_KERNEL)
-	hiddenLayers = [SigmoidLayer(10), SigmoidLayer(5), TanhLayer(5)]
+	hiddenLayers = [TanhLayer(20), TanhLayer(10), TanhLayer(10)]
 	outLayer = LinearLayer(1)
 
 	n.addInputModule(inLayer)
@@ -51,14 +55,13 @@ def BuildNetwork(INPUT_KERNEL):
 	return n
 
 from pybrain.datasets import SupervisedDataSet
-from pybrain.supervised.trainers import BackpropTrainer
+from pybrain.supervised.trainers import BackpropTrainer, RPropMinusTrainer
 def TrainNetwork(network, data, INPUT_KERNEL, steps, maxEpochs, continueEpochs):
 	ds = SupervisedDataSet(INPUT_KERNEL, 1)
 	for i in  xrange(steps):
 		ds.addSample(tuple(data[i:i+INPUT_KERNEL]), (data[i + INPUT_KERNEL]))
-	trainer = BackpropTrainer(net, ds, momentum=0.5, batchlearning=False)
-	return trainer.trainUntilConvergence(maxEpochs=maxEpochs, continueEpochs=continueEpochs)
-	#return trainer.trainUntilConvergence(verbose=True)
+	trainer = BackpropTrainer(net, ds, momentum=0.0, batchlearning=True, learningrate=0.01, lrdecay=1.)
+	return trainer.trainUntilConvergence(maxEpochs=maxEpochs, continueEpochs=continueEpochs, validationProportion = 0.25)
 
 def Predict(net, data, INPUT_KERNEL, num):
 	P = []
@@ -101,18 +104,18 @@ def PlotLearningErrors(info):
 
 ##################
 TRAIN_KERNEL = 5
-TRAIN_STEPS = 200
+TRAIN_STEPS = 50
 
 data = PrepareRates(parseEuroXRef('trainingdata/eurofxref-hist.csv'))
 net = BuildNetwork(TRAIN_KERNEL)
-trainInfo = TrainNetwork(net, data, TRAIN_KERNEL, TRAIN_STEPS, 50, 5)
+trainInfo = TrainNetwork(net, data, TRAIN_KERNEL, TRAIN_STEPS, 400, 10)
 
 PlotLearningErrors(trainInfo)
 
 # testing
 
 TEST_OFFSET = 0
-TEST_NUM = 100
+TEST_NUM = 50
 
 P = Predict(net, data[TEST_OFFSET:], TRAIN_KERNEL, TEST_NUM)
 T = data[TEST_OFFSET + TRAIN_KERNEL:TEST_OFFSET + TRAIN_KERNEL + TEST_NUM]

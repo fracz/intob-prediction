@@ -19,6 +19,21 @@ def parseEuroXRef(file):
 	rates.reverse()
 	return rates
 
+def parseOilCsv(file):
+	f = open(file, 'r')
+	
+	rates = []
+
+	for line in f:
+		split = line.split(',')
+		r = float(split[1])
+		rates.append(r)
+
+	f.close()
+	rates.reverse()
+	return rates
+
+
 def PrepareRates(rates):
 # convert rates 
 	rates_ = [(rates[k+1]-rates[k]) / rates[k] for k in xrange(len(rates)-1)]
@@ -60,7 +75,7 @@ def TrainNetwork(network, data, INPUT_KERNEL, steps, maxEpochs, continueEpochs):
 	ds = SupervisedDataSet(INPUT_KERNEL, 1)
 	for i in  xrange(steps):
 		ds.addSample(tuple(data[i:i+INPUT_KERNEL]), (data[i + INPUT_KERNEL]))
-	trainer = BackpropTrainer(net, ds, momentum=0.0, batchlearning=True, learningrate=0.01, lrdecay=1.)
+	trainer = BackpropTrainer(net, ds, momentum=0.0, batchlearning=False, learningrate=0.01, lrdecay=1.)
 	return trainer.trainUntilConvergence(maxEpochs=maxEpochs, continueEpochs=continueEpochs, validationProportion = 0.25)
 
 def Predict(net, data, INPUT_KERNEL, num):
@@ -103,19 +118,21 @@ def PlotLearningErrors(info):
 	plt.show()
 
 ##################
-TRAIN_KERNEL = 5
-TRAIN_STEPS = 50
+TRAIN_KERNEL = 3
+TRAIN_STEPS = 500
 
-data = PrepareRates(parseEuroXRef('trainingdata/eurofxref-hist.csv'))
+#data = PrepareRates(parseEuroXRef('trainingdata/eurofxref-hist.csv'))
+data = PrepareRates(parseOilCsv('trainingdata/oil.csv'))
+
 net = BuildNetwork(TRAIN_KERNEL)
-trainInfo = TrainNetwork(net, data, TRAIN_KERNEL, TRAIN_STEPS, 400, 10)
+trainInfo = TrainNetwork(net, data, TRAIN_KERNEL, TRAIN_STEPS, 200, 10)
 
 PlotLearningErrors(trainInfo)
 
 # testing
 
-TEST_OFFSET = 0
-TEST_NUM = 50
+TEST_OFFSET = 500
+TEST_NUM = 100
 
 P = Predict(net, data[TEST_OFFSET:], TRAIN_KERNEL, TEST_NUM)
 T = data[TEST_OFFSET + TRAIN_KERNEL:TEST_OFFSET + TRAIN_KERNEL + TEST_NUM]
